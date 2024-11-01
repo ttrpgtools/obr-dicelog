@@ -1,0 +1,14 @@
+{
+  "name": "Dice Log",
+  "version": "1.0.0",
+  "manifest_version": 1,
+  "icon": "https://obr-dicelog.ttrpg.tools/favicon.svg",
+  "author": "Colin Bate",
+  "action": {
+    "title": "Dice Log",
+    "icon": "/favicon.svg",
+    "popover": "/",
+    "height": 600,
+    "width": 400
+  }
+}
