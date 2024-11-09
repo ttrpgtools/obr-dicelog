@@ -3,7 +3,7 @@
   import ModeSwitcher from "./lib/ModeSwitcher.svelte";
   import OBR from "@owlbear-rodeo/sdk";
 
-  type PRoll = { from?: string; when?: string; roll: string };
+  type PRoll = { from?: string; when?: string; roll: string; meta?: string };
   let dicelog: PRoll[] = $state([]);
 
   function clear() {
@@ -87,7 +87,13 @@
         >
           {log.from}
         </div>{/if}
-      {log.roll}
+      <span
+        class={log.meta === "crit"
+          ? `text-green-500`
+          : log.meta === "miss"
+            ? `text-red-500`
+            : ``}>{log.roll}</span
+      >
       {#if log.when}<time
           datetime={log.when}
           class="absolute top-1.5 right-8 text-gray-600 dark:text-gray-400 hidden group-hover:block text-sm"
