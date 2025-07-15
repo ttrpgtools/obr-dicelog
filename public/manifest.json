@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "manifest_version": 1,
   "icon": "https://obr-dicelog.ttrpg.tools/favicon.svg",
+  "description": "A simple dice roll log for use with my Nimble 2 extension.",
+  "homepage_url": "https://ttrpg.tools/projects/nimblesheets",
   "author": "Colin Bate",
   "action": {
     "title": "Dice Log",
