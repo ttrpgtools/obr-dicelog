@@ -1,5 +1,6 @@
 # Owlbear Rodeo Dice Log Extension
 
+At the moment it supports my Nimble 2 Character Sheets.
 
 ## Get started
 
