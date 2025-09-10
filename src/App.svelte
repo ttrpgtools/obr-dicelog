@@ -4,9 +4,11 @@
     import OBR from "@owlbear-rodeo/sdk";
     import { bus } from "./lib/bus";
     import { PersistedState } from "runed";
+    import { IdbState } from "./lib/idb-state.svelte";
     import Icon from "./lib/icon.svelte";
     import type { RollResult } from "./lib/dice/type";
     import DiceRoll from "./lib/dice/dice-roll.svelte";
+    import Bus from "./lib/bus.svelte";
 
     type PRoll = {
         from?: string;
@@ -14,12 +16,15 @@
         roll?: RollResult;
         label?: string;
         rollModifier?: number;
+        rollId?: string;
     };
-    let dicelog = new PersistedState<PRoll[]>("dice-log", []);
+    let dicelog = new IdbState<PRoll[]>("dice-log", []);
     let enlarge = new PersistedState<boolean>("enlarge-state", false);
+    const rollcache = new Set<string>();
 
     function clear() {
         dicelog.current = [];
+        rollcache.clear();
     }
 
     function isRoll(obj: unknown): obj is PRoll {
@@ -35,26 +40,34 @@
         return fmtr.format(date);
     }
 
+    function handleMessage(msg: { connectionId: string; data: unknown }) {
+        if (typeof msg.data === "string") {
+            dicelog.current.push({
+                from: msg.connectionId,
+                when: new Date().toISOString(),
+                label: msg.data,
+            });
+        } else if (isRoll(msg.data)) {
+            if (msg.data.rollId) {
+                if (rollcache.has(msg.data.rollId)) {
+                    return;
+                }
+                rollcache.add(msg.data.rollId);
+            }
+            dicelog.current.push({
+                from: msg.connectionId,
+                when: new Date().toISOString(),
+                ...msg.data,
+            });
+        }
+    }
+
     async function setupOBRIntegration() {
         if (OBR.isAvailable) {
             OBR.onReady(() => {
                 OBR.broadcast.onMessage(
                     `tools.ttrpg.obr-dicelog/roll`,
-                    (msg) => {
-                        if (typeof msg.data === "string") {
-                            dicelog.current.push({
-                                from: msg.connectionId,
-                                when: new Date().toISOString(),
-                                label: msg.data,
-                            });
-                        } else if (isRoll(msg.data)) {
-                            dicelog.current.push({
-                                from: msg.connectionId,
-                                when: new Date().toISOString(),
-                                ...msg.data,
-                            });
-                        }
-                    },
+                    handleMessage,
                 );
             });
         }
@@ -66,21 +79,7 @@
 
     bus.on<{ connectionId: string; data: unknown }>(
         "tools.ttrpg.obr-dicelog/roll",
-        (msg) => {
-            if (typeof msg.data === "string") {
-                dicelog.current.push({
-                    from: msg.connectionId,
-                    when: new Date().toISOString(),
-                    label: msg.data,
-                });
-            } else if (isRoll(msg.data)) {
-                dicelog.current.push({
-                    from: msg.connectionId,
-                    when: new Date().toISOString(),
-                    ...msg.data,
-                });
-            }
-        },
+        handleMessage,
     );
 
     const viewport = document.documentElement;
@@ -98,6 +97,7 @@
     });
 </script>
 
+<Bus src="https://bus.ttrpg.tools" />
 <button
     type="button"
     aria-label="Clear Log"
